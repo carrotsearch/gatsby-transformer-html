@@ -1,0 +1,21 @@
+{
+  "name": "gatsby-transformer-html",
+  "version": "1.0.0",
+  "main": "./index.js",
+  "keywords": [
+    "gatsby",
+    "gatsby-plugin"
+  ],
+  "peerDependencies": {
+    "gatsby": "^2.0.0"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "gatsby-plugin-sharp": "^2.2.9",
+    "gatsby-remark-prismjs": "^3.3.3",
+    "lodash": "^4.17.15",
+    "prismjs": "^1.17.1",
+    "react": "^16.8.6"
+  },
+  "license": "MIT"
+}
