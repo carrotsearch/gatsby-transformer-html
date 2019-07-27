@@ -40,7 +40,7 @@ const highlightFragment = ($el, lang, code) => {
  * data-embed attribute is resolved against the path of the file in which
  * the embed tag appears.
  */
-const embedCode = ($, dir) => {
+const embedCode = ($, dir, reporter) => {
   $("pre[data-embed]")
     .filter((i, el) => $(el).parents("pre").length === 0)
     .replaceWith((i, el) => {
@@ -50,16 +50,19 @@ const embedCode = ($, dir) => {
       const embedAbsolute = path.resolve(dir, embed);
       if (!fs.existsSync(embedAbsolute)) {
         fail(`relative path ${embed}, resolved to ${embedAbsolute} does not exist.`);
+        return "";
       }
 
       if (!fs.statSync(embedAbsolute).isFile()) {
         fail(`path ${embed} must point to a file.`);
+        return "";
       }
 
       const ext = path.extname(embedAbsolute).substring(1).toLowerCase();
       const language = languageForExtension[ext];
       if (!language) {
         fail(`unknown language for ${embed}`);
+        return "";
       }
 
       const content = fs.readFileSync(embedAbsolute, "utf8");
@@ -71,7 +74,7 @@ const embedCode = ($, dir) => {
       return highlightFragment($el, language, content);
 
       function fail(message) {
-        throw `Failed to embed content: ${message}.`;
+        reporter.warn(`Failed to embed content: ${message}.`);
       }
     });
 
@@ -247,7 +250,7 @@ const onCreateNode = async ({
   $ = await processImages($, fileNodesByPath, reporter, cache);
   $ = rewriteLinks($);
   $ = addSectionAnchors($);
-  $ = embedCode($, node.dir);
+  $ = embedCode($, node.dir, reporter);
   $ = highlightCode($);
   $ = addIdsForIndexableFragments($);
 
