@@ -172,6 +172,7 @@ const anchorSvg = `<svg aria-hidden="true" height="16" viewBox="0 0 16 16" width
 const addSectionAnchors = $ => {
   $("section[id] > :header")
     .filter((i, el) => el.name !== "h1")
+    .filter((i, el) => $(el).parents("pre[data-language]").length === 0) // don't process HTML inside pre
     .replaceWith((i, el) => {
       const $el = $(el);
       return `<${el.name}>
