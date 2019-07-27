@@ -42,6 +42,7 @@ const highlightFragment = ($el, lang, code) => {
  */
 const embedCode = ($, dir) => {
   $("pre[data-embed]")
+    .filter((i, el) => $(el).parents("pre").length === 0)
     .replaceWith((i, el) => {
       const $el = $(el);
       const embed = $el.data("embed");
