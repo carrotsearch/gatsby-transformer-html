@@ -220,9 +220,9 @@ const addIdsForIndexableFragments = $ => {
  */
 const fixClosingTagsInHighlightedCode = html => {
   return html.replace(/<span class="token punctuation"><(\/?)<\/span>/g,
-                      `<span class="token punctuation">&lt;$1</span>`)
-             .replace(/<span class="token doctype"></g,
-                      `<span class="token doctype">&lt;`);
+    `<span class="token punctuation">&lt;$1</span>`)
+    .replace(/<span class="token doctype"></g,
+      `<span class="token doctype">&lt;`);
 };
 
 // Gatsby API implementation
@@ -303,6 +303,12 @@ const forEachFullTextFragment = ($, cb) => {
   elements.forEach(tag => {
     $(`${tag}`).each((i, e) => {
       const $e = $(e);
+      // Don't index the first paragraph of figure
+      // caption, it's index as figure heading.
+      if ($e.closest("figcaption").length > 0 && $e.is("p:first-child")) {
+        return;
+      }
+
       if ($e.parents("[data-marker]").length > 0 ||
         $e.find("[data-marker]").length > 0) {
         return;
@@ -313,6 +319,15 @@ const forEachFullTextFragment = ($, cb) => {
   });
 
   $("[data-marker]").removeAttr("data-marker");
+};
+
+const getFigureCaption = $e => {
+  const $caption = $e.find("figcaption");
+  if ($caption.children().length > 0) {
+    return normalize($caption.children().eq(0).text());
+  } else {
+    return normalize($caption.text());
+  }
 };
 
 const headingExtractors = [
@@ -346,14 +361,7 @@ const headingExtractors = [
       }
       return "figure";
     },
-    text: $e => {
-      const $caption = $e.find("figcaption");
-      if ($caption.children().length > 0) {
-        return $caption.children().eq(0).text();
-      } else {
-        return $caption.text();
-      }
-    }
+    text: getFigureCaption
   },
   {
     selector: ".warning, .info",
@@ -373,9 +381,20 @@ const collectIndexableFragments = $ => {
     return fragments;
   }
 
-  const extractParents = $e => $e.parents("section, article, .warning, .info")
-    .children(":header, strong")
-    .map((i, heading) => $(heading).text().trim()).get().reverse();
+  const extractParents = ($e, includeCaption) => {
+    const headings = $e.parents("section, article, .warning, .info")
+      .children(":header, strong")
+      .map((i, heading) => normalize($(heading).text())).get().reverse();
+
+    // For paragraphs inside figure caption,
+    // add figure heading to the list of parents.
+    const $f = $e.closest("figure");
+    if (includeCaption && $f.length > 0) {
+      headings.push(getFigureCaption($f));
+    }
+
+    return headings;
+  };
 
   headingExtractors.forEach(extractor => {
     $(extractor.selector).each((i, e) => {
@@ -384,7 +403,7 @@ const collectIndexableFragments = $ => {
         text: normalize(extractor.text($e)),
         type: extractor.type,
         id: $e.attr("id") || "",
-        parents: extractParents($e),
+        parents: extractParents($e, false),
         class: removeEmpty([extractor.class($e), $e.attr("class")])
       });
     });
@@ -395,7 +414,7 @@ const collectIndexableFragments = $ => {
       text: normalize($f.text().trim()),
       type: "paragraph",
       id: $f.attr("id"),
-      parents: extractParents($f),
+      parents: extractParents($f, true),
       class: removeEmpty([$f.attr("class")])
     })
   });
