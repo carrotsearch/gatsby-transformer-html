@@ -16,6 +16,8 @@ const isRelativeUrl = url => {
   return url && !/^(https?:\/\/)|^\/|^#/i.test(url);
 };
 
+const notInPre = $ => (i, el) => $(el).parents("pre").length === 0;
+
 // Maps file extensions to the language to use for highlighting.
 const languageForExtension = {
   "html": "markup",
@@ -42,7 +44,7 @@ const highlightFragment = ($el, lang, code) => {
  */
 const embedCode = ($, dir, reporter) => {
   $("pre[data-embed]")
-    .filter((i, el) => $(el).parents("pre").length === 0)
+    .filter(notInPre($))
     .replaceWith((i, el) => {
       const $el = $(el);
       const embed = $el.data("embed");
@@ -123,7 +125,7 @@ const rewriteLinks = $ => {
  * the image in multiple resolutions for different devices.
  */
 const processImages = async ($, fileNodesByPath, reporter, cache) => {
-  const $img = $("img");
+  const $img = $("img").filter(notInPre($));
 
   // Collect images whose relative paths point at existing files.
   const imageNodesToProcess = [];
