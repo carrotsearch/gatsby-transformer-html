@@ -124,7 +124,7 @@ const rewriteLinks = $ => {
  * Process images through "gatsby-plugin-sharp". This will copy and optimize
  * the image in multiple resolutions for different devices.
  */
-const processImages = async ($, fileNodesByPath, reporter, cache) => {
+const processImages = async ($, fileNodesByPath, pathPrefix, reporter, cache) => {
   const $img = $("img").filter(notInPre($));
 
   // Collect images whose relative paths point at existing files.
@@ -142,7 +142,7 @@ const processImages = async ($, fileNodesByPath, reporter, cache) => {
   const processed = await Promise.all(
     imageNodesToProcess.map(n => fluid({
       file: n,
-      args: { maxWidth: 40 * 18 },
+      args: { maxWidth: 40 * 18, pathPrefix },
       reporter,
       cache
     }))
@@ -408,7 +408,7 @@ const onCreateNode = async ({
   createParentChildLink({ parent: node, child: htmlNode });
 };
 
-const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache }) => {
+const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache, pathPrefix }) => {
   if (type.name === "Html") {
     return {
       html: {
@@ -420,7 +420,7 @@ const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache }) =
           // entity resolution in cheerio and then patch this in the
           // serialized HTML, see fixClosingTagsInHighlightedCode() below.
           let $ = cheerio.load(node.rawHtml, { decodeEntities: false });
-          $ = await processImages($, fileNodesByPath, reporter, cache);
+          $ = await processImages($, fileNodesByPath, pathPrefix, reporter, cache);
           $ = rewriteLinks($);
           $ = addSectionAnchors($);
           $ = embedCode($, node.dir, reporter);
