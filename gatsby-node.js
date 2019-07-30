@@ -225,72 +225,21 @@ const fixClosingTagsInHighlightedCode = html => {
       `<span class="token doctype">&lt;`);
 };
 
-// Gatsby API implementation
-const onCreateNode = async ({
-                              node,
-                              actions,
-                              loadNodeContent,
-                              createNodeId,
-                              createContentDigest,
-                              getNodesByType,
-                              reporter,
-                              cache
-                            }) => {
-  const { createNode, createParentChildLink } = actions;
-
-  if (node.internal.mediaType !== `text/html` || node.internal.type !== "File") {
-    return;
-  }
-
-  const fileNodesByPath = _.keyBy(getNodesByType("File"), n => n.relativePath);
-  const rawHtml = await loadNodeContent(node);
-
-  // For correct highlighting of HTML code, we need to disable
-  // entity resolution in cheerio and then patch this in the
-  // serialized HTML, see fixClosingTagsInHighlightedCode() below.
-  let $ = cheerio.load(rawHtml, { decodeEntities: false });
-  $ = await processImages($, fileNodesByPath, reporter, cache);
-  $ = rewriteLinks($);
-  $ = addSectionAnchors($);
-  $ = embedCode($, node.dir, reporter);
-  $ = highlightCode($);
-  $ = addIdsForIndexableFragments($);
-
-  const rewrittenHtml = fixClosingTagsInHighlightedCode($.html("article"));
-
-  const htmlNode = {
-    html: rewrittenHtml,
-    frontmatter: {
-      id: node.name,
-      title: $("h1").eq(0).text()
-    },
-
-    id: createNodeId(`${node.id} >>> HTML`),
-    children: [],
-    parent: node.id,
-    internal: {
-      contentDigest: createContentDigest(rawHtml),
-      type: "Html",
-    },
-  };
-
-  createNode(htmlNode);
-  createParentChildLink({ parent: node, child: htmlNode });
-};
-
 /**
  * Builds a table of contents JSON based on section nesting and headings.
  */
 const createToc = $ => {
-  return $("article > section[id]").map(function asToc(i, e) {
-    const $section = $(e);
-    const $subsections = $section.children("section[id]");
-    return {
-      heading: $section.children(":header").eq(0).text(),
-      anchor: $section.attr("id"),
-      ...$subsections.length > 0 && { sections: $subsections.map(asToc).get() }
-    };
-  }).get();
+  return $("article > section[id]")
+    .filter(notInPre($))
+    .map(function asToc(i, e) {
+      const $section = $(e);
+      const $subsections = $section.children("section[id]");
+      return {
+        heading: $section.children(":header").eq(0).text(),
+        anchor: $section.attr("id"),
+        ...$subsections.length > 0 && { sections: $subsections.map(asToc).get() }
+      };
+    }).get();
 };
 
 const removeEmpty = a => {
@@ -422,19 +371,77 @@ const collectIndexableFragments = $ => {
   return fragments;
 };
 
-const setFieldsOnGraphQLNodeType = ({ type }) => {
+// Gatsby API implementation
+const onCreateNode = async ({
+                              node,
+                              actions,
+                              loadNodeContent,
+                              createNodeId,
+                              createContentDigest,
+                            }) => {
+  const { createNode, createParentChildLink } = actions;
+
+  if (node.internal.mediaType !== `text/html` || node.internal.type !== "File") {
+    return;
+  }
+
+  const rawHtml = await loadNodeContent(node);
+  let $ = cheerio.load(rawHtml, { decodeEntities: false });
+
+  const htmlNode = {
+    rawHtml: rawHtml,
+    frontmatter: {
+      id: node.name,
+      title: normalize($("h1").eq(0).text())
+    },
+
+    id: createNodeId(`${node.id} >>> HTML`),
+    children: [],
+    parent: node.id,
+    internal: {
+      contentDigest: createContentDigest(rawHtml),
+      type: "Html",
+    },
+  };
+
+  createNode(htmlNode);
+  createParentChildLink({ parent: node, child: htmlNode });
+};
+
+const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache }) => {
   if (type.name === "Html") {
     return {
+      html: {
+        type: "String",
+        resolve: async (node) => {
+          const fileNodesByPath = _.keyBy(getNodesByType("File"), n => n.relativePath);
+
+          // For correct highlighting of HTML code, we need to disable
+          // entity resolution in cheerio and then patch this in the
+          // serialized HTML, see fixClosingTagsInHighlightedCode() below.
+          let $ = cheerio.load(node.rawHtml, { decodeEntities: false });
+          $ = await processImages($, fileNodesByPath, reporter, cache);
+          $ = rewriteLinks($);
+          $ = addSectionAnchors($);
+          $ = embedCode($, node.dir, reporter);
+          $ = highlightCode($);
+          $ = addIdsForIndexableFragments($);
+
+          return fixClosingTagsInHighlightedCode($.html("article"));
+        }
+      },
       tableOfContents: {
         type: GraphQLJSON,
         resolve: (node) => {
-          return createToc(cheerio.load(node.html));
+          return createToc(cheerio.load(node.rawHtml));
         }
       },
       indexableFragments: {
         type: GraphQLJSON,
         resolve: (node) => {
-          return collectIndexableFragments(cheerio.load(node.html));
+          let $ = cheerio.load(node.rawHtml);
+          $ = addIdsForIndexableFragments($);
+          return collectIndexableFragments($);
         }
       }
     }
