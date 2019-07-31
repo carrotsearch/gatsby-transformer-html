@@ -398,6 +398,7 @@ const onCreateNode = async ({
     id: createNodeId(`${node.id} >>> HTML`),
     children: [],
     parent: node.id,
+    dir: node.dir,
     internal: {
       contentDigest: createContentDigest(rawHtml),
       type: "Html",
