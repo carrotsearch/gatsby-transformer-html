@@ -17,7 +17,7 @@ One functional area of the plugin is enriching raw HTML content by:
 
 * adding synthetic identifiers to paragraph to make it possible to link to them from content search results.
 
-Another functional area of the plugin is extracting paragraph-sized text snippets from the page, so that they can be indexed in a client-side
+Another functional area of the plugin is extracting paragraph-sized text snippets from the page, so that they can be indexed in the client-side text search implemented by the [`gatsby-plugin-content-search`](https://github.com/carrotsearch/gatsby-plugin-content-search) plugin.
 
 The enriched HTML and lists of extracted text snippets are available in Gatsby's GraphQL model for use by other plugins.
 
