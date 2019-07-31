@@ -1,5 +1,5 @@
 A Gatsby transformer plugin for authoring content in HTML, part of
-[`gatsby-starter-apidocs`](https://github.com/carrotsearch/gatsby-starter-apidocs);
+[`gatsby-starter-apidocs`](https://github.com/carrotsearch/gatsby-starter-apidocs).
 
 ---
 
