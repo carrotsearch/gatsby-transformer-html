@@ -17,6 +17,7 @@ const isRelativeUrl = url => {
 };
 
 const notInPre = $ => (i, el) => $(el).parents("pre").length === 0;
+const indexingAllowed = $ => (i, el) => $(el).data("indexing") !== "disabled";
 
 // Maps file extensions to the language to use for highlighting.
 const languageForExtension = {
@@ -248,13 +249,20 @@ const removeEmpty = a => {
 
 const forEachFullTextFragment = ($, cb) => {
   const elements = [ "p", "li"];
+  const isIndexed = indexingAllowed($);
 
   elements.forEach(tag => {
     $(`${tag}`).each((i, e) => {
       const $e = $(e);
       // Don't index the first paragraph of figure
-      // caption, it's index as figure heading.
+      // caption, it's indexed as a figure heading.
       if ($e.closest("figcaption").length > 0 && $e.is("p:first-child")) {
+        return;
+      }
+
+      // Don't index if a child of an element with data-indexing="disabled".
+      const withFlag = $e.closest("[data-indexing]");
+      if (withFlag.length > 0 && !isIndexed(0, withFlag.get(0))) {
         return;
       }
 
@@ -325,8 +333,9 @@ const normalize = t => {
 };
 
 const collectIndexableFragments = $ => {
+  const isIndexed = indexingAllowed($);
   const fragments = [];
-  if ($("article").data("indexing") === "disabled") {
+  if (!isIndexed(0, $("article"))) {
     return fragments;
   }
 
@@ -346,16 +355,18 @@ const collectIndexableFragments = $ => {
   };
 
   headingExtractors.forEach(extractor => {
-    $(extractor.selector).each((i, e) => {
-      const $e = $(e);
-      fragments.push({
-        text: normalize(extractor.text($e)),
-        type: extractor.type,
-        id: $e.attr("id") || "",
-        parents: extractParents($e, false),
-        class: removeEmpty([extractor.class($e), $e.attr("class")])
+    $(extractor.selector)
+      .filter(isIndexed)
+      .each((i, e) => {
+        const $e = $(e);
+        fragments.push({
+          text: normalize(extractor.text($e)),
+          type: extractor.type,
+          id: $e.attr("id") || "",
+          parents: extractParents($e, false),
+          class: removeEmpty([extractor.class($e), $e.attr("class")])
+        });
       });
-    });
   });
 
   forEachFullTextFragment($, $f => {
