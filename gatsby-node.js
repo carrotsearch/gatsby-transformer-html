@@ -190,21 +190,33 @@ const addSectionAnchors = $ => {
 };
 
 const generateId = text => crypto.createHash('md5')
-  .update(text).digest("hex").substring(16);
+  .update(text).digest("hex").substring(8);
+
+const makeUnique = (id, existing) => {
+  let unique ;
+  if (existing.has(id)) {
+    let suffix = 0;
+    do {
+      unique = `${id}_${suffix}`;
+      suffix++;
+    } while (existing.has(unique));
+  } else {
+    unique = id;
+  }
+  existing.add(unique);
+  return unique;
+};
+
+const setId = ($f, existing) => {
+  $f.attr("id", makeUnique($f.attr("id") ||
+    generateId(normalize($f.text())), existing));
+};
 
 const addIdsForIndexableFragments = $ => {
-  forEachFullTextFragment($, $f => {
-    const hasId = !!$f.attr("id");
-    if (!hasId) {
-      $f.attr("id", generateId(normalize($f.text())));
-    }
-  });
-  $(".warning, .info").each((i, e) => {
-    const $e = $(e);
-    if (!$e.attr("id")) {
-      $e.attr("id", generateId(normalize($e.text())));
-    }
-  });
+  const existing = new Set();
+
+  forEachFullTextFragment($, $f => setId($f, existing));
+  $(".warning, .info").each((i, e) => setId($(e), existing));
   return $;
 };
 
