@@ -1,23 +1,9 @@
-const DELIMITER = "%";
 const VARIABLE_REGEX = /^\w+$/;
+const VARIABLE_WITH_DELIMITER_REGEX = /%(\w+)%/g;
 
-exports.replaceVariables = (html, variables) => {
-  if (!variables) {
-    return html;
-  }
-
-  // Make replacements
-  const re = new RegExp(
-    Object
-      .keys(variables)
-      .map(v => `${DELIMITER}(${v})${DELIMITER}`)
-      .join("|"),
-    "g"
-  );
-
-  return html.replace(re, function (match) {
-    const name = match.substring(1, match.length - 1);
-    return variables[name];
+exports.replaceVariables = (html, replacer) => {
+  return html.replace(VARIABLE_WITH_DELIMITER_REGEX, function (match, name) {
+    return replacer(name);
   });
 };
 
@@ -27,4 +13,8 @@ exports.validateVariables = variables => {
   if (offending.length > 0) {
     throw "Variable names must match [A-Za-z0-9_], offending names: " + offending.join(", ") + ".";
   }
+};
+
+exports.createMapReplacer = map => {
+  return name => map[name];
 };

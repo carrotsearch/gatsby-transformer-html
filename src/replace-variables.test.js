@@ -1,4 +1,4 @@
-const { replaceVariables, validateVariables } = require("./replace-variables.js");
+const { replaceVariables, validateVariables, createMapReplacer } = require("./replace-variables.js");
 require("must/register");
 
 describe("validateVariables", function () {
@@ -22,18 +22,11 @@ describe("validateVariables", function () {
 });
 
 describe("replaceVariables", function () {
-  it("must not fail when undefined variables object is passed", function () {
-    const input = "input";
-    const replaced = replaceVariables(input, undefined);
-
-    replaced.must.equal(input);
-  });
-
   it("must make individual replacements", function () {
     const input = "Something %to_replace%";
-    const replaced = replaceVariables(input, {
+    const replaced = replaceVariables(input, createMapReplacer({
       "to_replace": "to replace"
-    });
+    }));
 
     replaced.must.be.equal("Something to replace");
   });
@@ -41,11 +34,11 @@ describe("replaceVariables", function () {
 
   it("must make multiple replacements", function () {
     const input = "%sth% %to_replace%%00%with%00%%sth%";
-    const replaced = replaceVariables(input, {
+    const replaced = replaceVariables(input, createMapReplacer({
       "sth": "something",
       "to_replace": "to replace",
       "00": " "
-    });
+    }));
 
     replaced.must.be.equal("something to replace with something");
   });
