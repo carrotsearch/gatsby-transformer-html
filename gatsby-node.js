@@ -46,14 +46,25 @@ const highlightFragment = ($el, lang, code) => {
  * data-embed attribute is resolved against the path of the file in which
  * the embed tag appears.
  */
-const embedCode = ($, dir, reporter) => {
+const embedCode = ($, dir, variables, reporter) => {
   $("pre[data-embed]")
     .filter(notInPre($))
     .replaceWith((i, el) => {
       const $el = $(el);
-      const embed = $el.data("embed");
+      const declaredEmbed = $el.data("embed");
       const fragment = $el.data("fragment");
       const declaredLanguage = $el.data("language");
+
+      // Replace variables in the path. We don't care about the semantics
+      // here, it's up to the caller to ensure the path makes sense and is safe.
+      const embed = replaceVariables(declaredEmbed, (name) => {
+        let value = variables[name] || "";
+        if (value.endsWith("/" || value.endsWith("\\"))) {
+          return value.substring(0, value.length - 1);
+        } else {
+          return value;
+        }
+      });
 
       const embedAbsolute = path.resolve(dir, embed);
       if (!fs.existsSync(embedAbsolute)) {
@@ -460,7 +471,7 @@ const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache, pat
           $ = await processImages($, fileNodesByPath, pathPrefix, reporter, cache);
           $ = rewriteLinks($);
           $ = addSectionAnchors($);
-          $ = embedCode($, node.dir, reporter);
+          $ = embedCode($, node.dir, variables, reporter);
           $ = highlightCode($);
           $ = addIdsForIndexableFragments($);
 

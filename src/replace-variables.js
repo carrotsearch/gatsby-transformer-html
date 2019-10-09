@@ -2,8 +2,8 @@ const VARIABLE_REGEX = /^\w+$/;
 const VARIABLE_WITH_DELIMITER_REGEX = /%(\w+)%/g;
 
 exports.replaceVariables = (html, replacer) => {
-  return html.replace(VARIABLE_WITH_DELIMITER_REGEX, function (match, name) {
-    return replacer(name);
+  return html.replace(VARIABLE_WITH_DELIMITER_REGEX, function (match, name, offset) {
+    return replacer(name, offset);
   });
 };
 
