@@ -20,8 +20,8 @@
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "test": "mocha --recursive '*.test.js'",
-    "test-watch": "mocha --recursive './*.test.js' -w"
+    "test": "mocha --recursive 'src/**/*.test.js'",
+    "test-watch": "mocha --recursive 'src/**/*.test.js' -w"
   },
   "peerDependencies": {
     "gatsby": "^2.0.0"

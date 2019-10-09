@@ -1,4 +1,4 @@
-const replaceVariables = require("./html-replace-variables.js");
+const replaceVariables = require("./replace-variables.js");
 require("must/register");
 
 describe("replaceVariables", function () {

@@ -9,7 +9,7 @@ const { GraphQLJSON } = require(`gatsby/graphql`);
 const highlight = require("gatsby-remark-prismjs/highlight-code.js");
 const { fluid } = require("gatsby-plugin-sharp");
 
-const replaceVariables = require("./html-replace-variables.js");
+const replaceVariables = require("./src/replace-variables.js");
 
 // The transformation functions should be converted to plugins, but
 // for now we keep them integrated to avoid proliferation of boilerplate.
