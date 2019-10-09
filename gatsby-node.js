@@ -9,6 +9,8 @@ const { GraphQLJSON } = require(`gatsby/graphql`);
 const highlight = require("gatsby-remark-prismjs/highlight-code.js");
 const { fluid } = require("gatsby-plugin-sharp");
 
+const replaceVariables = require("./html-replace-variables.js");
+
 // The transformation functions should be converted to plugins, but
 // for now we keep them integrated to avoid proliferation of boilerplate.
 
@@ -432,7 +434,7 @@ const onCreateNode = async ({
   createParentChildLink({ parent: node, child: htmlNode });
 };
 
-const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache, pathPrefix }) => {
+const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache, pathPrefix }, { variables }) => {
   if (type.name === "Html") {
     return {
       html: {
@@ -451,7 +453,10 @@ const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache, pat
           $ = highlightCode($);
           $ = addIdsForIndexableFragments($);
 
-          return fixClosingTagsInHighlightedCode($.html("article"));
+          let html = fixClosingTagsInHighlightedCode($.html("article"));
+          html = replaceVariables(html, variables);
+
+          return html;
         }
       },
       tableOfContents: {

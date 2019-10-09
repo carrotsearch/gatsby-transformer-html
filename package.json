@@ -19,6 +19,10 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
+  "scripts": {
+    "test": "mocha --recursive '*.test.js'",
+    "test-watch": "mocha --recursive './*.test.js' -w"
+  },
   "peerDependencies": {
     "gatsby": "^2.0.0"
   },
@@ -29,6 +33,10 @@
     "lodash": "^4.17.15",
     "prismjs": "^1.17.1",
     "react": "^16.8.6"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.1",
+    "must": "^0.13.4"
   },
   "license": "MIT"
 }
