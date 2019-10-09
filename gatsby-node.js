@@ -10,6 +10,7 @@ const highlight = require("gatsby-remark-prismjs/highlight-code.js");
 const { fluid } = require("gatsby-plugin-sharp");
 
 const replaceVariables = require("./src/replace-variables.js");
+const extractFragment = require("./src/extract-fragment.js");
 
 // The transformation functions should be converted to plugins, but
 // for now we keep them integrated to avoid proliferation of boilerplate.
@@ -51,6 +52,8 @@ const embedCode = ($, dir, reporter) => {
     .replaceWith((i, el) => {
       const $el = $(el);
       const embed = $el.data("embed");
+      const fragment = $el.data("fragment");
+      const declaredLanguage = $el.data("language");
 
       const embedAbsolute = path.resolve(dir, embed);
       if (!fs.existsSync(embedAbsolute)) {
@@ -64,13 +67,10 @@ const embedCode = ($, dir, reporter) => {
       }
 
       const ext = path.extname(embedAbsolute).substring(1).toLowerCase();
-      const language = languageForExtension[ext];
-      if (!language) {
-        fail(`unknown language for ${embed}`);
-        return "";
-      }
+      const language = declaredLanguage || ext;
 
-      const content = fs.readFileSync(embedAbsolute, "utf8");
+      const rawContent = fs.readFileSync(embedAbsolute, "utf8");
+      const content = fragment ? extractFragment(rawContent, fragment) : rawContent;
 
       // Ideally, we should just insert the raw contents and have it
       // highlighted in the dedicated code below, but cheerio has problems
