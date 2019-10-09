@@ -8,7 +8,7 @@ module.exports = (content, fragmentId) => {
     return "";
   }
 
-  const lines = content.split(/[\r\n]+/);
+  const lines = content.split(/\r?\n/);
 
   let state = OUTSIDE_FRAGMENT;
   let output = [];

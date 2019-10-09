@@ -96,4 +96,22 @@ not included
     const fragment = extractFragments(input, "fragment1");
     fragment.must.equal("included");
   });
+
+  it("must preserve empty and blank lines", function () {
+    const input = `not included
+// fragment-start{fragment1}
+included
+
+   
+after blank
+// fragment-end{fragment1}
+not included    
+`;
+
+    const fragment = extractFragments(input, "fragment1");
+    fragment.must.equal(`included
+
+   
+after blank`);
+  });
 });

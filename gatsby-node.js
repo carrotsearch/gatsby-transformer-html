@@ -10,6 +10,7 @@ const highlight = require("gatsby-remark-prismjs/highlight-code.js");
 const { fluid } = require("gatsby-plugin-sharp");
 
 const { replaceVariables, validateVariables, createMapReplacer } = require("./src/replace-variables.js");
+const { removeCommonIndent } = require("./src/remove-common-indent.js");
 const extractFragment = require("./src/extract-fragment.js");
 
 // The transformation functions should be converted to plugins, but
@@ -97,7 +98,7 @@ const embedCode = ($, dir, variables, reporter) => {
       // highlighted in the dedicated code below, but cheerio has problems
       // serializing certain HTML tags (html, head, body), so we have to
       // highlight them here before cheerio has a chance to remove them.
-      return highlightFragment($el, language, content);
+      return highlightFragment($el, language, removeCommonIndent(content));
 
       function fail(message) {
         const dot = message.endsWith("." ? "" : ".");
@@ -118,7 +119,7 @@ const highlightCode = $ => {
   $("pre[data-language]")
     .replaceWith((i, el) => {
       const $el = $(el);
-      return highlightFragment($el, $el.data("language"), $el.html());
+      return highlightFragment($el, $el.data("language"), removeCommonIndent($el.html()));
     });
   return $;
 };
