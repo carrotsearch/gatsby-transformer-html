@@ -9,7 +9,7 @@ const { GraphQLJSON } = require(`gatsby/graphql`);
 const highlight = require("gatsby-remark-prismjs/highlight-code.js");
 const { fluid } = require("gatsby-plugin-sharp");
 
-const replaceVariables = require("./src/replace-variables.js");
+const { replaceVariables, validateVariables } = require("./src/replace-variables.js");
 const extractFragment = require("./src/extract-fragment.js");
 
 // The transformation functions should be converted to plugins, but
@@ -488,5 +488,14 @@ const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache, pat
   }
 };
 
+const onPreBootstrap = ({ reporter }, { variables }) => {
+  try {
+    validateVariables(variables);
+  } catch (e) {
+    reporter.panic(e);
+  }
+};
+
+exports.onPreBootstrap = onPreBootstrap;
 exports.onCreateNode = onCreateNode;
 exports.setFieldsOnGraphQLNodeType = setFieldsOnGraphQLNodeType;

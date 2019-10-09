@@ -1,18 +1,11 @@
-const replaceVariables = require("./replace-variables.js");
+const { replaceVariables, validateVariables } = require("./replace-variables.js");
 require("must/register");
 
-describe("replaceVariables", function () {
-  it("must not fail when undefined variables object is passed", function () {
-    const input = "input";
-    const replaced = replaceVariables(input, undefined);
-
-    replaced.must.equal(input);
-  });
-
+describe("validateVariables", function () {
   it("must not allow special characters in variable names", function () {
     let exception;
     try {
-      replaceVariables("", {
+      validateVariables({
         "NAME_OK": "",
         "%NOT_OK%": "",
         "SPECIAL$": ""
@@ -25,6 +18,15 @@ describe("replaceVariables", function () {
     exception.must.contain("%NOT_OK%");
     exception.must.contain("SPECIAL");
     exception.must.not.contain("NAME_OK");
+  })
+});
+
+describe("replaceVariables", function () {
+  it("must not fail when undefined variables object is passed", function () {
+    const input = "input";
+    const replaced = replaceVariables(input, undefined);
+
+    replaced.must.equal(input);
   });
 
   it("must make individual replacements", function () {
