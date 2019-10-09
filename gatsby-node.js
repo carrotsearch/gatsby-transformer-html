@@ -70,7 +70,17 @@ const embedCode = ($, dir, reporter) => {
       const language = declaredLanguage || ext;
 
       const rawContent = fs.readFileSync(embedAbsolute, "utf8");
-      const content = fragment ? extractFragment(rawContent, fragment) : rawContent;
+      let content;
+      if (fragment) {
+        try {
+          content = extractFragment(rawContent, fragment);
+        } catch (e) {
+          fail(e);
+          content = "";
+        }
+      } else {
+        content = rawContent;
+      }
 
       // Ideally, we should just insert the raw contents and have it
       // highlighted in the dedicated code below, but cheerio has problems
@@ -79,7 +89,8 @@ const embedCode = ($, dir, reporter) => {
       return highlightFragment($el, language, content);
 
       function fail(message) {
-        reporter.warn(`Failed to embed content: ${message}.`);
+        const dot = message.endsWith("." ? "" : ".");
+        reporter.warn(`Failed to embed content: ${message}${dot}`);
       }
     });
 
