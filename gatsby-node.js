@@ -23,13 +23,6 @@ const isRelativeUrl = url => {
 const notInPre = $ => (i, el) => $(el).parents("pre").length === 0;
 const indexingAllowed = $ => (i, el) => $(el).data("indexing") !== "disabled";
 
-// Maps file extensions to the language to use for highlighting.
-const languageForExtension = {
-  "html": "markup",
-  "js": "javascript",
-  "xml": "xml"
-};
-
 /**
  * Calls the "gatsby-remark-prismjs" plugin's highlighting code and returns
  * the appropriate HTML.
@@ -38,7 +31,7 @@ const highlightFragment = ($el, lang, code) => {
   const className = [$el.attr("class"), `language-${lang}`].filter(e => !!e).join(" ");
 
   return `<div class="gatsby-highlight">
-    <pre class="${className}"><code data-language="${lang}">${highlight(lang, code, false).trim()}</code></pre>
+    <pre class="${className}"><code data-language="${lang}">${highlight(lang, code, false)}</code></pre>
   </div>`;
 };
 
@@ -55,6 +48,7 @@ const embedCode = ($, dir, variables, reporter) => {
       const declaredEmbed = $el.data("embed");
       const fragment = $el.data("fragment");
       const declaredLanguage = $el.data("language");
+      const preserveIndent = $el.data("preserve-common-indent");
 
       // Replace variables in the path. We don't care about the semantics
       // here, it's up to the caller to ensure the path makes sense and is safe.
@@ -94,11 +88,15 @@ const embedCode = ($, dir, variables, reporter) => {
         content = rawContent;
       }
 
+      if (!preserveIndent) {
+        content = removeCommonIndent(content);
+      }
+
       // Ideally, we should just insert the raw contents and have it
       // highlighted in the dedicated code below, but cheerio has problems
       // serializing certain HTML tags (html, head, body), so we have to
       // highlight them here before cheerio has a chance to remove them.
-      return highlightFragment($el, language, removeCommonIndent(content));
+      return highlightFragment($el, language, content);
 
       function fail(message) {
         const dot = message.endsWith("." ? "" : ".");
@@ -119,7 +117,13 @@ const highlightCode = $ => {
   $("pre[data-language]")
     .replaceWith((i, el) => {
       const $el = $(el);
-      return highlightFragment($el, $el.data("language"), removeCommonIndent($el.html()));
+      const preserveIndent = $el.data("preserve-common-indent");
+
+      let html = $el.html();
+      if (!preserveIndent) {
+        html = removeCommonIndent(html);
+      }
+      return highlightFragment($el, $el.data("language"), html);
     });
   return $;
 };
