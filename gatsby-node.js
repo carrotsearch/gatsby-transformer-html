@@ -144,7 +144,7 @@ const rewriteLinks = $ => {
       return isRelativeUrl(href) && /\.html(#.*)?$/i.test(href);
     })
     .attr("href", (i, href) => {
-      return "/" + href.replace(/\.html((#.*)?)$/i, "$1");
+      return "/" + href.replace(/\.html((#.*)?)$/i, "$1/");
     });
 
   return $;
