@@ -11,14 +11,11 @@ const { fluid } = require("gatsby-plugin-sharp");
 
 const { replaceVariables, validateVariables, createMapReplacer } = require("./src/replace-variables.js");
 const { removeCommonIndent } = require("./src/remove-common-indent.js");
+const { rewriteInternalLinks } = require("./src/rewrite-internal-links.js");
 const extractFragment = require("./src/extract-fragment.js");
 
 // The transformation functions should be converted to plugins, but
 // for now we keep them integrated to avoid proliferation of boilerplate.
-
-const isRelativeUrl = url => {
-  return url && !/^(https?:\/\/)|^\/|^#/i.test(url);
-};
 
 const notInPre = $ => (i, el) => $(el).parents("pre").length === 0;
 const indexingAllowed = $ => (i, el) => $(el).data("indexing") !== "disabled";
@@ -125,28 +122,6 @@ const highlightCode = $ => {
       }
       return highlightFragment($el, $el.data("language"), html);
     });
-  return $;
-};
-
-/**
- * Rewrites local HTML links into links required by Gatsby. We do this to be
- * able to preserve working links in the source HTML files while feeding Gatsby
- * with absolute no-extension links it requires.
- */
-const rewriteLinks = $ => {
-  // The $ wrapper is a mutable DOM/jQuery-like representation, so
-  // we only need to select and modify links, returning the original $ reference.
-  $("a")
-    .filter((i, link) => {
-      const href = link.attribs.href;
-
-      // Must end with .html
-      return isRelativeUrl(href) && /\.html(#.*)?$/i.test(href);
-    })
-    .attr("href", (i, href) => {
-      return "/" + href.replace(/\.html((#.*)?)$/i, "$1/");
-    });
-
   return $;
 };
 
@@ -474,7 +449,7 @@ const setFieldsOnGraphQLNodeType = ({ type, getNodesByType, reporter, cache, pat
           // serialized HTML, see fixClosingTagsInHighlightedCode() below.
           let $ = cheerio.load(node.rawHtml, { decodeEntities: false });
           $ = await processImages($, fileNodesByPath, pathPrefix, reporter, cache);
-          $ = rewriteLinks($);
+          $ = rewriteInternalLinks($);
           $ = addSectionAnchors($);
           $ = embedCode($, node.dir, variables, reporter);
           $ = highlightCode($);
