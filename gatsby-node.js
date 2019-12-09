@@ -32,6 +32,12 @@ const highlightFragment = ($el, lang, code) => {
   </div>`;
 };
 
+
+const warn = (message, reporter) => {
+  const dot = message.endsWith("." ? "" : ".");
+  reporter.warn(`Failed to embed content: ${message}${dot}`);
+};
+
 const loadEmbeddedContent = (declaredEmbed, dir, variables, reporter) => {
   // Replace variables in the path. We don't care about the semantics
   // here, it's up to the caller to ensure the path makes sense and is safe.
@@ -46,12 +52,12 @@ const loadEmbeddedContent = (declaredEmbed, dir, variables, reporter) => {
 
   const embedAbsolute = path.resolve(dir, embed);
   if (!fs.existsSync(embedAbsolute)) {
-    fail(`relative path ${embed}, resolved to ${embedAbsolute} does not exist.`);
+    warn(`relative path ${embed}, resolved to ${embedAbsolute} does not exist.`, reporter);
     return undefined;
   }
 
   if (!fs.statSync(embedAbsolute).isFile()) {
-    fail(`path ${embed} must point to a file.`);
+    warn(`path ${embed} must point to a file.`, reporter);
     return undefined;
   }
 
@@ -87,7 +93,7 @@ const embedCode = ($, dir, variables, reporter) => {
           try {
             content = extractFragment(rawContent, fragment);
           } catch (e) {
-            fail(e);
+            warn(e, reporter);
             content = "";
           }
         } else {
@@ -103,13 +109,7 @@ const embedCode = ($, dir, variables, reporter) => {
         // serializing certain HTML tags (html, head, body), so we have to
         // highlight them here before cheerio has a chance to remove them.
         return highlightFragment($el, language, content);
-
-        function fail(message) {
-          const dot = message.endsWith("." ? "" : ".");
-          reporter.warn(`Failed to embed content: ${message}${dot}`);
-        }
       });
-
   return $;
 };
 
