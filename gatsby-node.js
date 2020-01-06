@@ -196,7 +196,7 @@ const addSectionAnchors = $ => {
       .replaceWith((i, el) => {
         const $el = $(el);
         return `<${el.name}>
-        <a class="anchor" href="#${$el.parent().attr("id")}" aria-hidden="true">${anchorSvg}</a>${$el.text()}
+        <a class="anchor" href="#${$el.parent().attr("id")}" aria-hidden="true">${anchorSvg}</a>${$el.html()}
       </${el.name}>`;
       });
   return $;
