@@ -7,6 +7,9 @@ exports.replaceVariables = (html, replacer) => {
 const VARIABLE_REGEX = /^\w+$/;
 exports.validateVariables = variables => {
   // Validate variable names
+  if (!variables) {
+    return;
+  }
   const offending = Object.keys(variables)
     .filter(v => !VARIABLE_REGEX.test(v));
   if (offending.length > 0) {
