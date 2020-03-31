@@ -445,8 +445,21 @@ const onCreateNode = async ({
   createParentChildLink({ parent: node, child: htmlNode });
 };
 
+const tryCache = async (cache, key, produceEntry) => {
+  const cached = await cache.get(key);
+  if (cached) {
+    return cached;
+  } else {
+    const entry = produceEntry();
+
+    // Let's be optimistic and not wait for writing to the cache?
+    cache.set(key, entry);
+    return entry;
+  }
+};
+
 const setFieldsOnGraphQLNodeType = (
-    { type, getNodesByType, reporter, cache, pathPrefix },
+    { type, getNodesByType, reporter, cache, pathPrefix, createContentDigest },
     { variables, transformers }) => {
   if (type.name === "Html") {
     const runTransformers = ($, dir) => {
@@ -478,7 +491,6 @@ const setFieldsOnGraphQLNodeType = (
 
           let html = fixClosingTagsInHighlightedCode($.html("article"));
           html = replaceVariables(html, createMapReplacer(variables));
-
           return html;
         }
       },
@@ -490,11 +502,13 @@ const setFieldsOnGraphQLNodeType = (
       },
       indexableFragments: {
         type: GraphQLJSON,
-        resolve: (node) => {
-          let $ = cheerio.load(node.rawHtml);
-          $ = runTransformers($, node.dir);
-          $ = addIdsForIndexableFragments($);
-          return collectIndexableFragments($);
+        resolve: async (node) => {
+          return tryCache(cache, node.internal.contentDigest, () => {
+            let $ = cheerio.load(node.rawHtml);
+            $ = runTransformers($, node.dir);
+            $ = addIdsForIndexableFragments($);
+            return collectIndexableFragments($);
+          });
         }
       }
     }
