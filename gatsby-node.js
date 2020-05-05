@@ -33,9 +33,9 @@ const highlightFragment = ($el, lang, code) => {
 };
 
 
-const warn = (message, reporter) => {
+const error = (message, reporter) => {
   const dot = message.endsWith("." ? "" : ".");
-  reporter.warn(`Failed to embed content: ${message}${dot}`);
+  reporter.error(`Failed to embed content: ${message}${dot}`);
 };
 
 const loadEmbeddedContent = (declaredEmbed, dir, variables, reporter) => {
@@ -52,12 +52,12 @@ const loadEmbeddedContent = (declaredEmbed, dir, variables, reporter) => {
 
   const embedAbsolute = path.resolve(dir, embed);
   if (!fs.existsSync(embedAbsolute)) {
-    warn(`relative path ${embed}, resolved to ${embedAbsolute} does not exist.`, reporter);
+    error(`relative path ${embed}, resolved to ${embedAbsolute} does not exist.`, reporter);
     return undefined;
   }
 
   if (!fs.statSync(embedAbsolute).isFile()) {
-    warn(`path ${embed} must point to a file.`, reporter);
+    error(`path ${embed} must point to a file.`, reporter);
     return undefined;
   }
 
@@ -93,7 +93,7 @@ const embedCode = ($, dir, variables, reporter) => {
           try {
             content = extractFragment(rawContent, fragment);
           } catch (e) {
-            warn(e, reporter);
+            error(e, reporter);
             content = "";
           }
         } else {
