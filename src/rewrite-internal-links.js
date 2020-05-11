@@ -11,7 +11,7 @@ exports.rewriteInternalUrl = rewriteInternalUrl;
 exports.rewriteInternalLinks = $ => {
   // The $ wrapper is a mutable DOM/jQuery-like representation, so
   // we only need to select and modify links, returning the original $ reference.
-  $("a")
+  $("a:not([data-external])")
   .filter((i, link) => {
     const href = link.attribs.href;
 
