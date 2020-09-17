@@ -259,7 +259,10 @@ const createToc = $ => {
       .filter(notInPre($))
       .map(function asToc(i, e) {
         const $section = $(e);
-        const $subsections = $section.children("section[id]");
+        const $subsections = $section.is("[data-toc='omit-children']") ? [] :
+            $section
+                .children("section[id]")
+                .filter((i, el) => !$(el).is("[data-toc='omit']"));
         return {
           heading: $section.children(":header").eq(0).text(),
           anchor: $section.attr("id"),
