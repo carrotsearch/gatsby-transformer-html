@@ -175,7 +175,7 @@ const processImages = async ($, fileNodesByPath, pathPrefix, reporter, cache) =>
         const ratio = `${(1 / fluid.aspectRatio) * 100}%`;
         return `<div style="position: relative">
         <span style="padding-bottom: ${ratio}; background-image: url('${fluid.base64}')" 
-              class="fluid preview"> </span>
+              class="preview ${className}"> </span>
         <img class="${className}"
              alt="${img.attribs.alt || ""}"
              title="${img.attribs.title || ""}"
