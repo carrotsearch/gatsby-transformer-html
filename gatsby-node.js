@@ -71,45 +71,45 @@ const loadEmbeddedContent = (declaredEmbed, dir, variables, reporter) => {
  */
 const embedCode = ($, dir, variables, reporter) => {
   $("pre[data-embed]")
-      .filter(notInPre($))
-      .replaceWith((i, el) => {
-        const $el = $(el);
-        const declaredEmbed = $el.data("embed");
-        const fragment = $el.data("fragment");
-        const declaredLanguage = $el.data("language");
-        const preserveIndent = $el.data("preserve-common-indent");
+    .filter(notInPre($))
+    .replaceWith((i, el) => {
+      const $el = $(el);
+      const declaredEmbed = $el.data("embed");
+      const fragment = $el.data("fragment");
+      const declaredLanguage = $el.data("language");
+      const preserveIndent = $el.data("preserve-common-indent");
 
-        const rawContent = loadEmbeddedContent(declaredEmbed, dir, variables, reporter);
+      const rawContent = loadEmbeddedContent(declaredEmbed, dir, variables, reporter);
 
-        if (rawContent === undefined) {
-          return "";
+      if (rawContent === undefined) {
+        return "";
+      }
+
+      const ext = path.extname(declaredEmbed).substring(1).toLowerCase();
+      const language = declaredLanguage || ext;
+
+      let content;
+      if (fragment) {
+        try {
+          content = extractFragment(rawContent, fragment);
+        } catch (e) {
+          error(e, reporter);
+          content = "";
         }
+      } else {
+        content = rawContent;
+      }
 
-        const ext = path.extname(declaredEmbed).substring(1).toLowerCase();
-        const language = declaredLanguage || ext;
+      if (!preserveIndent) {
+        content = removeCommonIndent(content);
+      }
 
-        let content;
-        if (fragment) {
-          try {
-            content = extractFragment(rawContent, fragment);
-          } catch (e) {
-            error(e, reporter);
-            content = "";
-          }
-        } else {
-          content = rawContent;
-        }
-
-        if (!preserveIndent) {
-          content = removeCommonIndent(content);
-        }
-
-        // Ideally, we should just insert the raw contents and have it
-        // highlighted in the dedicated code below, but cheerio has problems
-        // serializing certain HTML tags (html, head, body), so we have to
-        // highlight them here before cheerio has a chance to remove them.
-        return highlightFragment($el, language, content);
-      });
+      // Ideally, we should just insert the raw contents and have it
+      // highlighted in the dedicated code below, but cheerio has problems
+      // serializing certain HTML tags (html, head, body), so we have to
+      // highlight them here before cheerio has a chance to remove them.
+      return highlightFragment($el, language, content);
+    });
   return $;
 };
 
@@ -121,16 +121,16 @@ const highlightCode = $ => {
   // The $ wrapper is a mutable DOM/jQuery-like representation, so
   // we only need to select and modify links, returning the original $ reference.
   $("pre[data-language]")
-      .replaceWith((i, el) => {
-        const $el = $(el);
-        const preserveIndent = $el.data("preserve-common-indent");
+    .replaceWith((i, el) => {
+      const $el = $(el);
+      const preserveIndent = $el.data("preserve-common-indent");
 
-        let html = $el.html();
-        if (!preserveIndent) {
-          html = removeCommonIndent(html);
-        }
-        return highlightFragment($el, $el.data("language"), html);
-      });
+      let html = $el.html();
+      if (!preserveIndent) {
+        html = removeCommonIndent(html);
+      }
+      return highlightFragment($el, $el.data("language"), html);
+    });
   return $;
 };
 
@@ -138,7 +138,7 @@ const highlightCode = $ => {
  * Process images through "gatsby-plugin-sharp". This will copy and optimize
  * the image in multiple resolutions for different devices.
  */
-const processImages = async ($, fileNodesByPath, pathPrefix, reporter, cache) => {
+const processImages = async ($, fileNodesByPath, pathPrefix, imageQuality, reporter, cache) => {
   const $img = $("img").filter(notInPre($));
 
   // Collect images whose relative paths point at existing files.
@@ -154,12 +154,12 @@ const processImages = async ($, fileNodesByPath, pathPrefix, reporter, cache) =>
 
   // Process the images through the sharp plugin.
   const processed = await Promise.all(
-      imageNodesToProcess.map(n => fluid({
-        file: n,
-        args: { maxWidth: 40 * 18, pathPrefix },
-        reporter,
-        cache
-      }))
+    imageNodesToProcess.map(n => fluid({
+      file: n,
+      args: { maxWidth: 40 * 18, pathPrefix, quality: imageQuality },
+      reporter,
+      cache
+    }))
   );
   const processedByRelativePath = processed.reduce((map, fluid, i) => {
     map[imageNodesToProcess[i].relativePath] = fluid;
@@ -168,12 +168,12 @@ const processImages = async ($, fileNodesByPath, pathPrefix, reporter, cache) =>
 
   // Replace the images in the HTML.
   $img
-      .filter((i, img) => _.has(processedByRelativePath, img.attribs.src))
-      .replaceWith((i, img) => {
-        const fluid = processedByRelativePath[img.attribs.src];
-        const className = [img.attribs.class, "fluid"].filter(e => !!e).join(" ");
-        const ratio = `${(1 / fluid.aspectRatio) * 100}%`;
-        return `<div style="position: relative">
+    .filter((i, img) => _.has(processedByRelativePath, img.attribs.src))
+    .replaceWith((i, img) => {
+      const fluid = processedByRelativePath[img.attribs.src];
+      const className = [img.attribs.class, "fluid"].filter(e => !!e).join(" ");
+      const ratio = `${(1 / fluid.aspectRatio) * 100}%`;
+      return `<div style="position: relative">
         <span style="padding-bottom: ${ratio}; background-image: url('${fluid.base64}')" 
               class="preview ${className}"> </span>
         <img class="${className}"
@@ -183,7 +183,7 @@ const processImages = async ($, fileNodesByPath, pathPrefix, reporter, cache) =>
              srcSet="${fluid.srcSet}"
              sizes="${fluid.sizes}" />
       </div>`;
-      });
+    });
   return $;
 };
 
@@ -191,19 +191,19 @@ const anchorSvg = `<svg aria-hidden="true" height="16" viewBox="0 0 16 16" width
 
 const addSectionAnchors = $ => {
   $("section[id] > :header")
-      .filter((i, el) => el.name !== "h1")
-      .filter((i, el) => $(el).parents("pre[data-language]").length === 0) // don't process HTML inside pre
-      .replaceWith((i, el) => {
-        const $el = $(el);
-        return `<${el.name}>
+    .filter((i, el) => el.name !== "h1")
+    .filter((i, el) => $(el).parents("pre[data-language]").length === 0) // don't process HTML inside pre
+    .replaceWith((i, el) => {
+      const $el = $(el);
+      return `<${el.name}>
         <a class="anchor" href="#${$el.parent().attr("id")}" aria-hidden="true">${anchorSvg}</a>${$el.html()}
       </${el.name}>`;
-      });
+    });
   return $;
 };
 
 const generateId = text => crypto.createHash('md5')
-    .update(text).digest("hex").substring(8);
+  .update(text).digest("hex").substring(8);
 
 const makeUnique = (id, existing) => {
   let unique ;
@@ -222,7 +222,7 @@ const makeUnique = (id, existing) => {
 
 const setId = ($f, existing) => {
   $f.attr("id", makeUnique($f.attr("id") ||
-      generateId(normalize($f.text())), existing));
+    generateId(normalize($f.text())), existing));
 };
 
 const addIdsForIndexableFragments = $ => {
@@ -246,9 +246,9 @@ const addIdsForIndexableFragments = $ => {
  */
 const fixClosingTagsInHighlightedCode = html => {
   return html.replace(/<span class="token punctuation"><(\/?)<\/span>/g,
-      `<span class="token punctuation">&lt;$1</span>`)
-      .replace(/<span class="token doctype"></g,
-          `<span class="token doctype">&lt;`);
+    `<span class="token punctuation">&lt;$1</span>`)
+    .replace(/<span class="token doctype"></g,
+      `<span class="token doctype">&lt;`);
 };
 
 /**
@@ -256,19 +256,19 @@ const fixClosingTagsInHighlightedCode = html => {
  */
 const createToc = $ => {
   return $("article > section[id]")
-      .filter(notInPre($))
-      .map(function asToc(i, e) {
-        const $section = $(e);
-        const $subsections = $section.is("[data-toc='omit-children']") ? [] :
-            $section
-                .children("section[id]")
-                .filter((i, el) => !$(el).is("[data-toc='omit']"));
-        return {
-          heading: $section.children(":header").eq(0).text(),
-          anchor: $section.attr("id"),
-          ...$subsections.length > 0 && { sections: $subsections.map(asToc).get() }
-        };
-      }).get();
+    .filter(notInPre($))
+    .map(function asToc(i, e) {
+      const $section = $(e);
+      const $subsections = $section.is("[data-toc='omit-children']") ? [] :
+        $section
+          .children("section[id]")
+          .filter((i, el) => !$(el).is("[data-toc='omit']"));
+      return {
+        heading: $section.children(":header").eq(0).text(),
+        anchor: $section.attr("id"),
+        ...$subsections.length > 0 && { sections: $subsections.map(asToc).get() }
+      };
+    }).get();
 };
 
 const removeEmpty = a => {
@@ -295,7 +295,7 @@ const forEachFullTextFragment = ($, cb) => {
       }
 
       if ($e.parents("[data-marker]").length > 0 ||
-          $e.find("[data-marker]").length > 0) {
+        $e.find("[data-marker]").length > 0) {
         return;
       }
       cb($e);
@@ -369,8 +369,8 @@ const collectIndexableFragments = $ => {
 
   const extractParents = ($e, includeCaption) => {
     const headings = $e.parents("section, article, .warning, .info")
-        .children(":header, strong")
-        .map((i, heading) => normalize($(heading).text())).get().reverse();
+      .children(":header, strong")
+      .map((i, heading) => normalize($(heading).text())).get().reverse();
 
     // For paragraphs inside figure caption,
     // add figure heading to the list of parents.
@@ -384,17 +384,17 @@ const collectIndexableFragments = $ => {
 
   headingExtractors.forEach(extractor => {
     $(extractor.selector)
-        .filter(isIndexed)
-        .each((i, e) => {
-          const $e = $(e);
-          fragments.push({
-            text: normalize(extractor.text($e)),
-            type: extractor.type,
-            id: $e.attr("id") || "",
-            parents: extractParents($e, false),
-            class: removeEmpty([extractor.class($e), $e.attr("class")])
-          });
+      .filter(isIndexed)
+      .each((i, e) => {
+        const $e = $(e);
+        fragments.push({
+          text: normalize(extractor.text($e)),
+          type: extractor.type,
+          id: $e.attr("id") || "",
+          parents: extractParents($e, false),
+          class: removeEmpty([extractor.class($e), $e.attr("class")])
         });
+      });
   });
 
   forEachFullTextFragment($, $f => {
@@ -462,8 +462,8 @@ const tryCache = async (cache, key, produceEntry) => {
 };
 
 const setFieldsOnGraphQLNodeType = (
-    { type, getNodesByType, reporter, cache, pathPrefix, createContentDigest },
-    { variables, transformers }) => {
+  { type, getNodesByType, reporter, cache, pathPrefix, createContentDigest },
+  { variables, transformers, imageQuality = 90 }) => {
   if (type.name === "Html") {
     const runTransformers = ($, dir) => {
       if (transformers) {
@@ -485,7 +485,7 @@ const setFieldsOnGraphQLNodeType = (
           // serialized HTML, see fixClosingTagsInHighlightedCode() below.
           let $ = cheerio.load(node.rawHtml, { decodeEntities: false });
           $ = runTransformers($, node.dir);
-          $ = await processImages($, fileNodesByPath, pathPrefix, reporter, cache);
+          $ = await processImages($, fileNodesByPath, pathPrefix, imageQuality, reporter, cache);
           $ = rewriteInternalLinks($);
           $ = addSectionAnchors($);
           $ = embedCode($, node.dir, variables, reporter);
