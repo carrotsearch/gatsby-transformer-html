@@ -11,6 +11,7 @@ const { fluid } = require("gatsby-plugin-sharp");
 
 const { replaceVariables, validateVariables, createMapReplacer } = require("./src/replace-variables.js");
 const { removeCommonIndent } = require("./src/remove-common-indent.js");
+const { removeLeadingAndTrailingNewlines } = require("./src/remove-leading-and-trailing-newlines.js");
 const { rewriteInternalLinks } = require("./src/rewrite-internal-links.js");
 const extractFragment = require("./src/extract-fragment.js");
 
@@ -78,6 +79,7 @@ const embedCode = ($, dir, variables, reporter) => {
       const fragment = $el.data("fragment");
       const declaredLanguage = $el.data("language");
       const preserveIndent = $el.data("preserve-common-indent");
+      const preserveNewlines = $el.data("preserve-leading-and-trailing-newlines");
 
       const rawContent = loadEmbeddedContent(declaredEmbed, dir, variables, reporter);
 
@@ -102,6 +104,10 @@ const embedCode = ($, dir, variables, reporter) => {
 
       if (!preserveIndent) {
         content = removeCommonIndent(content);
+      }
+
+      if (!preserveNewlines) {
+        content = removeLeadingAndTrailingNewlines(content);
       }
 
       // Ideally, we should just insert the raw contents and have it
