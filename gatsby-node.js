@@ -1,6 +1,5 @@
 const path = require("path");
 const fs = require("fs");
-const crypto = require('crypto');
 
 const _ = require("lodash");
 const cheerio = require("cheerio");
@@ -13,6 +12,7 @@ const { replaceVariables, validateVariables, createMapReplacer } = require("./sr
 const { removeCommonIndent } = require("./src/remove-common-indent.js");
 const { removeLeadingAndTrailingNewlines } = require("./src/remove-leading-and-trailing-newlines.js");
 const { rewriteInternalLinks } = require("./src/rewrite-internal-links.js");
+const { generateElementId } = require("./src/generate-element-id.js");
 const extractFragment = require("./src/extract-fragment.js");
 
 // The transformation functions should be converted to plugins, but
@@ -208,34 +208,11 @@ const addSectionAnchors = $ => {
   return $;
 };
 
-const generateId = text => crypto.createHash('md5')
-  .update(text).digest("hex").substring(8);
-
-const makeUnique = (id, existing) => {
-  let unique ;
-  if (existing.has(id)) {
-    let suffix = 0;
-    do {
-      unique = `${id}_${suffix}`;
-      suffix++;
-    } while (existing.has(unique));
-  } else {
-    unique = id;
-  }
-  existing.add(unique);
-  return unique;
-};
-
-const setId = ($f, existing) => {
-  $f.attr("id", makeUnique($f.attr("id") ||
-    generateId(normalize($f.text())), existing));
-};
-
 const addIdsForIndexableFragments = $ => {
   const existing = new Set();
 
-  forEachFullTextFragment($, $f => setId($f, existing));
-  $(".warning, .info").each((i, e) => setId($(e), existing));
+  forEachFullTextFragment($, $f => generateElementId($f, normalize, existing));
+  $(".warning, .info").each((i, e) => generateElementId($(e), normalize, existing));
   return $;
 };
 
@@ -405,7 +382,7 @@ const collectIndexableFragments = $ => {
 
   forEachFullTextFragment($, $f => {
     fragments.push({
-      text: normalize($f.text().trim()),
+      text: normalize($f.text()),
       type: "paragraph",
       id: $f.attr("id"),
       parents: extractParents($f, true),
