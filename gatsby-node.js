@@ -336,6 +336,12 @@ const headingExtractors = [
     type: "heading",
     class: () => null,
     text: $e => $e.find("strong").eq(0).text()
+  },
+  {
+    selector: "dt[id]",
+    type: "heading",
+    class: () => null,
+    text: $e => $e.text()
   }
 ];
 
