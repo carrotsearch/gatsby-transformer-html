@@ -31,7 +31,7 @@
     "gatsby-plugin-sharp": "2.6.36",
     "gatsby-remark-prismjs": "3.5.13",
     "lodash": "4.17.20",
-    "prismjs": "1.21.0"
+    "prismjs": "1.24.0"
   },
   "devDependencies": {
     "mocha": "8.1.3",
