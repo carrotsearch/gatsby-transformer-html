@@ -1,3 +1,7 @@
+This repository is deprecated. The most up-to-date code is now at [@carrotsearch/gatsby-theme-apidocs](https://github.com/carrotsearch/gatsby-theme-apidocs/tree/master/plugins/gatsby-plugin-transformer-html).
+
+---
+
 A Gatsby transformer plugin for authoring content in HTML, part of
 [`gatsby-starter-apidocs`](https://github.com/carrotsearch/gatsby-starter-apidocs).
 
