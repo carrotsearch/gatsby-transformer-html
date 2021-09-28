@@ -30,7 +30,7 @@
     "cheerio": "1.0.0-rc.3",
     "gatsby-plugin-sharp": "2.6.36",
     "gatsby-remark-prismjs": "3.5.13",
-    "lodash": "4.17.20",
+    "lodash": "4.17.21",
     "prismjs": "1.21.0"
   },
   "devDependencies": {
