@@ -1,3 +1,12 @@
+> **⚠️ Deprecated.** This repository is no longer maintained. It was part of the
+> Gatsby-based APIdocs toolchain, which has been replaced by
+> [`@carrotsearch/eleventy-apidocs`](https://github.com/carrotsearch/eleventy-apidocs).
+> See the [live docs](https://carrotsearch.github.io/eleventy-apidocs/) or the
+> [npm package](https://www.npmjs.com/package/@carrotsearch/eleventy-apidocs) to
+> get started with the new version.
+
+---
+
 This repository is deprecated. The most up-to-date code is now at [@carrotsearch/gatsby-theme-apidocs](https://github.com/carrotsearch/gatsby-theme-apidocs/tree/master/plugins/gatsby-plugin-transformer-html).
 
 ---
